@@ -1,0 +1,1028 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Employee Selection Scorecard (Interactive)</title>
+  <style>
+    :root{
+      /* Same premium warm-neutral palette as Slide 14 */
+      --bg: #fbfaf7;
+      --card: rgba(255,255,255,.72);
+      --ink: #1f1a16;
+      --muted: rgba(31,26,22,.60);
+      --grid: rgba(31,26,22,.10);
+      --grid2: rgba(31,26,22,.06);
+      --accent: #7a4e2d;      /* espresso */
+      --accent2:#c28a5a;      /* caramel */
+      --ok: #2f6b4f;
+      --warn:#a86b1d;
+      --bad: #8a2c2c;
+      --shadow: 0 18px 50px rgba(20,16,12,.10);
+      --radius: 22px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      background:
+        radial-gradient(1200px 800px at 12% 10%, rgba(194,138,90,.12), transparent 60%),
+        radial-gradient(1000px 700px at 85% 15%, rgba(122,78,45,.10), transparent 55%),
+        radial-gradient(900px 700px at 50% 95%, rgba(31,26,22,.08), transparent 55%),
+        var(--bg);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--ink);
+      padding:24px;
+    }
+
+    .wrap{
+      width:min(1360px, 96vw);
+      display:grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap:18px;
+      align-items:stretch;
+    }
+
+    .card{
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.62));
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(31,26,22,.08);
+      overflow:hidden;
+      position:relative;
+    }
+    .card::before{
+      content:"";
+      position:absolute; inset:-1px;
+      background:
+        radial-gradient(620px 320px at 20% 10%, rgba(194,138,90,.18), transparent 55%),
+        radial-gradient(760px 380px at 90% 0%, rgba(122,78,45,.14), transparent 60%);
+      pointer-events:none;
+      opacity:.62;
+    }
+
+    .left{
+      padding:18px 18px 14px;
+      z-index:1;
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .kicker{
+      font-size:12px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color: rgba(31,26,22,.55);
+    }
+    h1{
+      margin:0;
+      font-size:24px;
+      line-height:1.15;
+      letter-spacing:-0.02em;
+    }
+    .sub{
+      margin:0;
+      font-size:13px;
+      color: var(--muted);
+      line-height:1.5;
+      max-width:70ch;
+    }
+
+    .summaryRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:6px;
+    }
+    .tile{
+      border-radius:16px;
+      border:1px solid rgba(31,26,22,.10);
+      background: rgba(255,255,255,.55);
+      padding:12px 12px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .tile b{
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(31,26,22,.55);
+    }
+    .tile span{
+      font-size:20px;
+      font-weight:850;
+      letter-spacing:-0.02em;
+      color: rgba(31,26,22,.86);
+    }
+    .tile small{
+      color: rgba(31,26,22,.55);
+      font-weight:650;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      border:1px solid rgba(31,26,22,.10);
+      background: rgba(255,255,255,.55);
+      color: rgba(31,26,22,.75);
+      white-space:nowrap;
+    }
+    .badge.good{ color: var(--ok); border-color: rgba(47,107,79,.22); background: rgba(47,107,79,.08); }
+    .badge.mid{ color: var(--warn); border-color: rgba(168,107,29,.22); background: rgba(168,107,29,.08); }
+    .badge.low{ color: var(--bad); border-color: rgba(138,44,44,.22); background: rgba(138,44,44,.08); }
+
+    .help{
+      margin-top:6px;
+      border-radius: 16px;
+      border:1px solid rgba(31,26,22,.10);
+      background: rgba(255,255,255,.50);
+      padding:12px 12px;
+      font-size:12px;
+      color: rgba(31,26,22,.62);
+      line-height:1.55;
+    }
+    .help b{ color: rgba(31,26,22,.82); }
+    code{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      font-size:11px;
+      background: rgba(31,26,22,.06);
+      padding:2px 6px;
+      border-radius:8px;
+      border:1px solid rgba(31,26,22,.08);
+    }
+
+    .right{
+      padding:14px 14px 14px;
+      z-index:1;
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .panelTitle{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:10px;
+      padding:6px 6px 0;
+    }
+    .panelTitle b{
+      font-size:12px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color: rgba(31,26,22,.55);
+    }
+    .panelTitle span{
+      font-size:12px;
+      color: var(--muted);
+    }
+
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      padding:0 6px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .toolbar .leftTools, .toolbar .rightTools{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+    }
+
+    button{
+      cursor:pointer;
+      border-radius: 999px;
+      border:1px solid rgba(31,26,22,.12);
+      background: rgba(255,255,255,.60);
+      padding:10px 12px;
+      font-size:12px;
+      font-weight:800;
+      color: rgba(31,26,22,.78);
+      transition: transform .05s ease, box-shadow .2s ease, border-color .2s ease;
+      white-space:nowrap;
+    }
+    button:hover{
+      border-color: rgba(122,78,45,.35);
+      box-shadow: 0 10px 24px rgba(20,16,12,.10);
+      transform: translateY(-1px);
+    }
+
+    .pill{
+      border-radius:999px;
+      border:1px solid rgba(31,26,22,.10);
+      background: rgba(255,255,255,.55);
+      padding:8px 10px;
+      font-size:12px;
+      color: rgba(31,26,22,.65);
+      font-weight:750;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      white-space:nowrap;
+    }
+
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius: 16px;
+      border:1px solid rgba(31,26,22,.10);
+      background: rgba(255,255,255,.55);
+    }
+    th, td{
+      padding:10px 10px;
+      font-size:12px;
+      border-bottom:1px solid rgba(31,26,22,.08);
+      vertical-align:middle;
+    }
+    th{
+      text-align:left;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color: rgba(31,26,22,.55);
+      font-weight:900;
+      background: rgba(255,255,255,.45);
+    }
+    tr:last-child td{ border-bottom:none; }
+
+    .rowHead{
+      font-weight:850;
+      color: rgba(31,26,22,.78);
+      line-height:1.15;
+    }
+    .rowHead small{
+      display:block;
+      margin-top:3px;
+      font-weight:700;
+      color: rgba(31,26,22,.48);
+    }
+
+    input[type="text"], input[type="number"], select{
+      width:100%;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid rgba(31,26,22,.14);
+      background: rgba(255,255,255,.70);
+      color: var(--ink);
+      outline:none;
+      font-weight:750;
+      font-size:12px;
+    }
+    input[type="number"]{ text-align:right; }
+    input:focus, select:focus{
+      border-color: rgba(122,78,45,.55);
+      box-shadow: 0 0 0 4px rgba(194,138,90,.18);
+    }
+
+    .mini{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .mini input[type="checkbox"]{
+      width:16px; height:16px;
+      accent-color: var(--accent);
+    }
+
+    .num{
+      font-variant-numeric: tabular-nums;
+      font-weight:900;
+      letter-spacing:-0.01em;
+      color: rgba(31,26,22,.86);
+    }
+
+    .scoreCell{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:120px;
+    }
+    .bar{
+      height:8px;
+      border-radius:999px;
+      background: rgba(31,26,22,.08);
+      overflow:hidden;
+      border:1px solid rgba(31,26,22,.08);
+    }
+    .bar > i{
+      display:block;
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(194,138,90,.75), rgba(122,78,45,.75));
+    }
+
+    .dimTableWrap{
+      overflow:auto;
+      border-radius:16px;
+    }
+
+    .weightsCard{
+      border-radius:16px;
+      border:1px solid rgba(31,26,22,.10);
+      background: rgba(255,255,255,.55);
+      padding:12px;
+      margin: 0 6px;
+    }
+    .weightsCard .wHead{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .weightsCard .wHead b{
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(31,26,22,.55);
+    }
+    .weightsGrid{
+      display:grid;
+      grid-template-columns: 1.1fr .5fr;
+      gap:8px 10px;
+      align-items:center;
+    }
+    .weightsGrid label{
+      font-size:12px;
+      font-weight:800;
+      color: rgba(31,26,22,.72);
+    }
+
+    @media (max-width: 1040px){
+      .wrap{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- LEFT: slide narrative + rubric -->
+    <section class="card left">
+      <div class="kicker">Employee Selection</div>
+      <h1>Employee Scoring Sheet (5 Dimensions)</h1>
+      <p class="sub">
+        Use this standardized scorecard to shortlist pilot participants fairly and transparently.
+        The total score is a weighted average (0–100), designed to prioritize employees with higher need while maintaining operational feasibility.
+      </p>
+
+      <div class="summaryRow">
+        <div class="tile">
+          <b>Total Formula</b>
+          <small><code>Total = Σ(scoreᵢ × weightᵢ) / Σ(weightᵢ)</code></small>
+          <span id="wSum">Weights: —</span>
+        </div>
+        <div class="tile">
+          <b>Recommendation</b>
+          <span id="recText">—</span>
+          <small id="recHint">—</small>
+        </div>
+      </div>
+
+      <div class="help">
+        <b>Eligibility guardrails (recommended):</b><br/>
+        • Primary scope: <b>below Director</b> (frontline & supervisors).<br/>
+        • Contractors: include long-term on-property contractors under hotel scheduling control (suggested cap: ≤20% seats / hotel).<br/><br/>
+        <b>Scoring dimensions:</b> Years since last home visit · Travel burden · Care responsibility · Performance & attendance · Backfill feasibility.<br/>
+        <b>Tip:</b> Put the full rubric & definitions in Appendix A3/A4; keep this sheet for execution and auditing.
+      </div>
+    </section>
+
+    <!-- RIGHT: weights + interactive employee table -->
+    <section class="card right">
+      <div class="panelTitle">
+        <b>Interactive Scorecard</b>
+        <span>Batch scoring · sort · export</span>
+      </div>
+
+      <div class="weightsCard">
+        <div class="wHead">
+          <b>Weights (Editable)</b>
+          <div class="mini">
+            <span class="pill" id="weightStatus">ΣW = —</span>
+            <button id="btnNormalize" type="button">Normalize to 100</button>
+          </div>
+        </div>
+        <div class="weightsGrid" id="weightsGrid"></div>
+      </div>
+
+      <div class="toolbar">
+        <div class="leftTools">
+          <button id="btnAdd" type="button">Add Employee</button>
+          <button id="btnSort" type="button">Sort by Total</button>
+          <button id="btnReset" type="button">Reset Sample</button>
+        </div>
+        <div class="rightTools">
+          <button id="btnExport" type="button">Export CSV</button>
+          <span class="pill">Scores 0–100 · auto rubric</span>
+        </div>
+      </div>
+
+      <div class="dimTableWrap">
+        <table id="empTable" aria-label="Employee scoring table">
+          <thead>
+            <tr>
+              <th style="min-width:160px;">Employee</th>
+              <th style="min-width:140px;">Role / Status</th>
+              <th style="min-width:140px;">Years Since Home</th>
+              <th style="min-width:150px;">Travel Burden</th>
+              <th style="min-width:150px;">Care Responsibility</th>
+              <th style="min-width:150px;">Perf & Attendance</th>
+              <th style="min-width:160px;">Backfill Feasibility</th>
+              <th style="min-width:140px;">Total (0–100)</th>
+              <th style="min-width:110px;">Action</th>
+            </tr>
+          </thead>
+          <tbody><!-- injected --></tbody>
+        </table>
+      </div>
+
+      <div class="help">
+        <b>How to use (Slide 16):</b><br/>
+        1) Collect employee inputs (survey + HR data): last home visit, travel time, care needs, performance, backfill feasibility.<br/>
+        2) Enter values — dimension scores auto-calc via rubric; adjust weights if needed.<br/>
+        3) Use <b>Total</b> for shortlisting; use “Eligibility” warnings to prevent disputes.<br/>
+        4) Export CSV for audit trail and group calibration meeting.
+      </div>
+    </section>
+  </div>
+
+<script>
+/** =========================
+ *  Slide 16 — Employee Scorecard
+ *  - Edit rubric thresholds here to match your Appendix A3.
+ *  - Dimensions: 5
+ * ========================= */
+
+const DIMENSIONS = [
+  { key:"yearsAway", name:"Years Since Home Visit", short:"Years Since Home" },
+  { key:"travel",   name:"Travel Burden",          short:"Travel Burden" },
+  { key:"care",     name:"Care Responsibility",    short:"Care" },
+  { key:"perf",     name:"Performance & Attendance", short:"Perf & Attendance" },
+  { key:"backfill", name:"Backfill Feasibility",   short:"Backfill" }
+];
+
+// Default weights (editable)
+let weights = {
+  yearsAway: 26,
+  travel:   22,
+  care:     20,
+  perf:     18,
+  backfill: 14
+};
+
+// ===== Rubrics (0–100) =====
+// You can replace these with your official rules 1:1 once Appendix A3 is finalized.
+function scoreYearsAway(years){
+  // Prioritize those who haven't been home for longer
+  const y = clamp(Number(years||0), 0, 10);
+  if (y >= 6) return 100;
+  if (y >= 5) return 92;
+  if (y >= 4) return 84;
+  if (y >= 3) return 72;
+  if (y >= 2) return 58;
+  if (y >= 1) return 40;
+  return 20;
+}
+
+function scoreTravelHours(hours){
+  // Higher travel burden => higher score (more need)
+  const h = clamp(Number(hours||0), 0, 30);
+  if (h >= 16) return 100;
+  if (h >= 12) return 88;
+  if (h >= 8)  return 74;
+  if (h >= 5)  return 58;
+  if (h >= 3)  return 42;
+  if (h >= 1)  return 28;
+  return 18;
+}
+
+function scoreCare(level){
+  // Higher responsibility => higher score (more need)
+  // levels: none, child, elder, both, special
+  const map = {
+    none: 20,
+    child: 55,
+    elder: 55,
+    both: 80,
+    special: 95
+  };
+  return map[level] ?? 20;
+}
+
+function scorePerf(rating, absences){
+  // Want fairness: strong performers get a lift, but not overriding “need”
+  // rating 1..5, absences days (0..)
+  const r = clamp(Number(rating||3), 1, 5);
+  const a = clamp(Number(absences||0), 0, 30);
+
+  // base by rating
+  const base = ({1:35, 2:50, 3:65, 4:80, 5:92})[r];
+
+  // penalty by absences (non-disciplinary absences should be handled in policy, adjust if needed)
+  const penalty = Math.min(30, a * 2); // 2 points per day, cap 30
+  return clamp(base - penalty, 10, 100);
+}
+
+function scoreBackfill(level){
+  // Higher feasibility => higher score (less operational risk)
+  const map = {
+    easy: 95,
+    medium: 70,
+    hard: 40,
+    critical: 15
+  };
+  return map[level] ?? 70;
+}
+
+// ===== Eligibility rules (guardrails) =====
+function eligibilityFlag(roleLevel, outsourced){
+  // roleLevel: frontline/supervisor/manager/director/above
+  // recommended: below Director
+  if (roleLevel === "director" || roleLevel === "above") {
+    return { ok:false, label:"Not Recommended: Director+", cls:"low" };
+  }
+  // outsourced allowed with cap at hotel-level; here just soft warning tag
+  if (outsourced) {
+    return { ok:true, label:"Contractor (check ≤20% cap)", cls:"mid" };
+  }
+  return { ok:true, label:"Eligible (recommended)", cls:"good" };
+}
+
+// ===== Employee list model =====
+let employees = [
+  {
+    name:"Employee A",
+    dept:"Front Office",
+    level:"frontline",
+    outsourced:false,
+    yearsAway:3,
+    travelHours:10,
+    care:"elder",
+    perfRating:4,
+    absences:1,
+    backfill:"medium"
+  },
+  {
+    name:"Employee B",
+    dept:"Housekeeping",
+    level:"supervisor",
+    outsourced:false,
+    yearsAway:5,
+    travelHours:14,
+    care:"both",
+    perfRating:3,
+    absences:2,
+    backfill:"hard"
+  },
+  {
+    name:"Employee C",
+    dept:"F&B",
+    level:"manager",
+    outsourced:true,
+    yearsAway:2,
+    travelHours:6,
+    care:"child",
+    perfRating:5,
+    absences:0,
+    backfill:"medium"
+  }
+];
+
+function clamp(n, lo, hi){ return Math.max(lo, Math.min(hi, n)); }
+
+function weightSum(){
+  return Object.values(weights).reduce((a,b)=>a + Math.max(0, Number(b||0)), 0);
+}
+
+function normalizeWeights(){
+  const sum = weightSum();
+  if (sum <= 0) return;
+  for (const k of Object.keys(weights)){
+    weights[k] = Math.round((weights[k] / sum) * 1000) / 10; // one decimal
+  }
+}
+
+function computeDimensionScores(emp){
+  const sYears = scoreYearsAway(emp.yearsAway);
+  const sTravel = scoreTravelHours(emp.travelHours);
+  const sCare = scoreCare(emp.care);
+  const sPerf = scorePerf(emp.perfRating, emp.absences);
+  const sBack = scoreBackfill(emp.backfill);
+
+  return {
+    yearsAway: sYears,
+    travel: sTravel,
+    care: sCare,
+    perf: sPerf,
+    backfill: sBack
+  };
+}
+
+function computeTotal(emp){
+  const ds = computeDimensionScores(emp);
+  const sumW = weightSum();
+
+  // if weights all 0 => simple average
+  if (sumW <= 0){
+    const avg = Object.values(ds).reduce((a,b)=>a+b,0) / Object.values(ds).length;
+    return Math.round(avg * 10) / 10;
+  }
+
+  let total = 0;
+  for (const k of Object.keys(ds)){
+    const w = Math.max(0, Number(weights[k]||0));
+    total += ds[k] * w;
+  }
+  total = total / sumW;
+  return Math.round(total * 10) / 10;
+}
+
+function recommendationFromTotals(list){
+  // For the “Recommendation” tile: show how many strong candidates exist
+  const totals = list.map(e => computeTotal(e));
+  const strong = totals.filter(x => x >= 80).length;
+  const good = totals.filter(x => x >= 65 && x < 80).length;
+  const low  = totals.filter(x => x < 65).length;
+
+  if (strong >= 3) return { title:"Strong Shortlist", hint:`${strong} strong · ${good} review · ${low} conditional`, cls:"good" };
+  if (strong >= 1) return { title:"Mixed (Calibrate)", hint:`${strong} strong · ${good} review · ${low} conditional`, cls:"mid" };
+  return { title:"Needs Calibration", hint:`${strong} strong · ${good} review · ${low} conditional`, cls:"low" };
+}
+
+/** =========================
+ *  DOM Rendering
+ * ========================= */
+const wGrid = document.getElementById("weightsGrid");
+const weightStatus = document.getElementById("weightStatus");
+const wSumEl = document.getElementById("wSum");
+const recText = document.getElementById("recText");
+const recHint = document.getElementById("recHint");
+const empTbody = document.querySelector("#empTable tbody");
+
+function renderWeights(){
+  wGrid.innerHTML = "";
+  for (const dim of DIMENSIONS){
+    const label = document.createElement("label");
+    label.textContent = dim.short;
+
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = "0";
+    input.step = "1";
+    input.value = weights[dim.key];
+    input.addEventListener("input", () => {
+      weights[dim.key] = Number(input.value || 0);
+      renderAll();
+    });
+
+    wGrid.appendChild(label);
+    wGrid.appendChild(input);
+  }
+
+  const sum = Math.round(weightSum() * 10) / 10;
+  weightStatus.textContent = `ΣW = ${sum}`;
+  wSumEl.textContent = `Weights: ΣW = ${sum}`;
+}
+
+function scoreBarHTML(val){
+  const v = clamp(Number(val||0), 0, 100);
+  return `
+    <div class="scoreCell">
+      <div class="num">${v.toFixed(0)}</div>
+      <div class="bar"><i style="width:${v}%"></i></div>
+    </div>
+  `;
+}
+
+function renderEmployees(){
+  empTbody.innerHTML = "";
+
+  employees.forEach((emp, idx) => {
+    const ds = computeDimensionScores(emp);
+    const total = computeTotal(emp);
+    const flag = eligibilityFlag(emp.level, emp.outsourced);
+
+    const tr = document.createElement("tr");
+
+    // Employee
+    const tdName = document.createElement("td");
+    tdName.innerHTML = `
+      <div class="rowHead">${escapeHtml(emp.name || `Employee ${idx+1}`)}
+        <small>${escapeHtml(emp.dept || "Department")}</small>
+      </div>
+    `;
+    // Role/status
+    const tdRole = document.createElement("td");
+    tdRole.innerHTML = `
+      <div style="display:grid; gap:8px;">
+        <select data-field="level">
+          <option value="frontline">Frontline</option>
+          <option value="supervisor">Supervisor</option>
+          <option value="manager">Manager</option>
+          <option value="director">Director</option>
+          <option value="above">Above Director</option>
+        </select>
+        <div class="mini">
+          <input type="checkbox" data-field="outsourced" ${emp.outsourced ? "checked":""}/>
+          <span style="font-weight:750; color:rgba(31,26,22,.62);">Contractor</span>
+        </div>
+        <span class="badge ${flag.cls}">${flag.label}</span>
+      </div>
+    `;
+
+    // Years since home
+    const tdYears = document.createElement("td");
+    tdYears.innerHTML = `
+      <div style="display:grid; gap:8px;">
+        <input type="number" min="0" step="1" data-field="yearsAway" value="${emp.yearsAway ?? 0}">
+        <div style="display:flex; justify-content:space-between; align-items:center; color:rgba(31,26,22,.55); font-weight:750; font-size:11px;">
+          <span>Auto score</span><span class="num">${ds.yearsAway.toFixed(0)}</span>
+        </div>
+        ${scoreBarHTML(ds.yearsAway)}
+      </div>
+    `;
+
+    // Travel burden
+    const tdTravel = document.createElement("td");
+    tdTravel.innerHTML = `
+      <div style="display:grid; gap:8px;">
+        <input type="number" min="0" step="0.5" data-field="travelHours" value="${emp.travelHours ?? 0}">
+        <div style="display:flex; justify-content:space-between; align-items:center; color:rgba(31,26,22,.55); font-weight:750; font-size:11px;">
+          <span>Hours (one-way)</span><span class="num">${ds.travel.toFixed(0)}</span>
+        </div>
+        ${scoreBarHTML(ds.travel)}
+      </div>
+    `;
+
+    // Care
+    const tdCare = document.createElement("td");
+    tdCare.innerHTML = `
+      <div style="display:grid; gap:8px;">
+        <select data-field="care">
+          <option value="none">None</option>
+          <option value="child">Child</option>
+          <option value="elder">Elder</option>
+          <option value="both">Child + Elder</option>
+          <option value="special">Special Situation</option>
+        </select>
+        <div style="display:flex; justify-content:space-between; align-items:center; color:rgba(31,26,22,.55); font-weight:750; font-size:11px;">
+          <span>Auto score</span><span class="num">${ds.care.toFixed(0)}</span>
+        </div>
+        ${scoreBarHTML(ds.care)}
+      </div>
+    `;
+
+    // Performance & attendance
+    const tdPerf = document.createElement("td");
+    tdPerf.innerHTML = `
+      <div style="display:grid; gap:8px;">
+        <div style="display:grid; grid-template-columns:0.8fr 1.2fr; gap:8px;">
+          <select data-field="perfRating">
+            <option value="1">Rating 1</option>
+            <option value="2">Rating 2</option>
+            <option value="3">Rating 3</option>
+            <option value="4">Rating 4</option>
+            <option value="5">Rating 5</option>
+          </select>
+          <input type="number" min="0" step="1" data-field="absences" value="${emp.absences ?? 0}" title="Absence days (adjust policy as needed)">
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; color:rgba(31,26,22,.55); font-weight:750; font-size:11px;">
+          <span>Auto score</span><span class="num">${ds.perf.toFixed(0)}</span>
+        </div>
+        ${scoreBarHTML(ds.perf)}
+      </div>
+    `;
+
+    // Backfill feasibility
+    const tdBack = document.createElement("td");
+    tdBack.innerHTML = `
+      <div style="display:grid; gap:8px;">
+        <select data-field="backfill">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+          <option value="critical">Critical Role</option>
+        </select>
+        <div style="display:flex; justify-content:space-between; align-items:center; color:rgba(31,26,22,.55); font-weight:750; font-size:11px;">
+          <span>Auto score</span><span class="num">${ds.backfill.toFixed(0)}</span>
+        </div>
+        ${scoreBarHTML(ds.backfill)}
+      </div>
+    `;
+
+    // Total
+    const tdTotal = document.createElement("td");
+    const tier = total >= 80 ? {t:"Strong", cls:"good"} : total >= 65 ? {t:"Review", cls:"mid"} : {t:"Conditional", cls:"low"};
+    tdTotal.innerHTML = `
+      <div style="display:grid; gap:8px;">
+        <div class="num" style="font-size:20px;">${total.toFixed(1)}</div>
+        <span class="badge ${tier.cls}">${tier.t}</span>
+        <div style="color:rgba(31,26,22,.55); font-weight:750; font-size:11px;">Weighted 0–100</div>
+      </div>
+    `;
+
+    // Action
+    const tdAct = document.createElement("td");
+    tdAct.innerHTML = `
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button type="button" data-act="dup">Duplicate</button>
+        <button type="button" data-act="del">Remove</button>
+      </div>
+    `;
+
+    tr.appendChild(tdName);
+    tr.appendChild(tdRole);
+    tr.appendChild(tdYears);
+    tr.appendChild(tdTravel);
+    tr.appendChild(tdCare);
+    tr.appendChild(tdPerf);
+    tr.appendChild(tdBack);
+    tr.appendChild(tdTotal);
+    tr.appendChild(tdAct);
+
+    // bind events for inputs/selects in row
+    tr.querySelectorAll("[data-field]").forEach(elm => {
+      const field = elm.getAttribute("data-field");
+      if (elm.tagName === "SELECT") elm.value = String(emp[field] ?? "");
+      if (elm.type === "checkbox") {
+        elm.addEventListener("change", () => {
+          emp[field] = elm.checked;
+          renderAll();
+        });
+      } else {
+        elm.addEventListener("input", () => {
+          emp[field] = (elm.tagName === "SELECT") ? elm.value : elm.value;
+          // coerce numeric fields
+          if (["yearsAway","travelHours","perfRating","absences"].includes(field)) {
+            emp[field] = Number(emp[field] || 0);
+          }
+          renderAll();
+        });
+      }
+    });
+
+    // bind actions
+    tr.querySelectorAll("button[data-act]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const act = btn.getAttribute("data-act");
+        if (act === "del") {
+          employees.splice(idx, 1);
+        } else if (act === "dup") {
+          employees.splice(idx+1, 0, JSON.parse(JSON.stringify(emp)));
+        }
+        renderAll();
+      });
+    });
+
+    empTbody.appendChild(tr);
+  });
+}
+
+function renderRecommendation(){
+  const rec = recommendationFromTotals(employees);
+  recText.textContent = rec.title;
+  recHint.textContent = rec.hint;
+}
+
+function renderAll(){
+  renderWeights();
+  renderEmployees();
+  renderRecommendation();
+
+  const sum = weightSum();
+  const sumRounded = Math.round(sum*10)/10;
+  document.getElementById("weightStatus").textContent = `ΣW = ${sumRounded}`;
+}
+
+// ===== Utilities =====
+function escapeHtml(str){
+  return String(str ?? "").replace(/[&<>"']/g, (m) => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[m]));
+}
+
+function sortByTotalDesc(){
+  employees.sort((a,b) => computeTotal(b) - computeTotal(a));
+}
+
+function exportCSV(){
+  const headers = [
+    "name","dept","level","outsourced",
+    "yearsAway","travelHours","care","perfRating","absences","backfill",
+    "score_yearsAway","score_travel","score_care","score_perf","score_backfill",
+    "total"
+  ];
+  const rows = employees.map(emp => {
+    const ds = computeDimensionScores(emp);
+    const total = computeTotal(emp);
+    return [
+      emp.name, emp.dept, emp.level, emp.outsourced ? "1":"0",
+      emp.yearsAway, emp.travelHours, emp.care, emp.perfRating, emp.absences, emp.backfill,
+      ds.yearsAway, ds.travel, ds.care, ds.perf, ds.backfill,
+      total
+    ];
+  });
+
+  const csv = [headers.join(",")]
+    .concat(rows.map(r => r.map(x => `"${String(x ?? "").replace(/"/g,'""')}"`).join(",")))
+    .join("\n");
+
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Slide16_EmployeeScorecard.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// ===== Buttons =====
+document.getElementById("btnNormalize").addEventListener("click", () => {
+  normalizeWeights();
+  renderAll();
+});
+document.getElementById("btnAdd").addEventListener("click", () => {
+  employees.push({
+    name:`Employee ${employees.length+1}`,
+    dept:"Department",
+    level:"frontline",
+    outsourced:false,
+    yearsAway:0,
+    travelHours:0,
+    care:"none",
+    perfRating:3,
+    absences:0,
+    backfill:"medium"
+  });
+  renderAll();
+});
+document.getElementById("btnSort").addEventListener("click", () => {
+  sortByTotalDesc();
+  renderAll();
+});
+document.getElementById("btnReset").addEventListener("click", () => {
+  weights = { yearsAway:26, travel:22, care:20, perf:18, backfill:14 };
+  employees = [
+    {
+      name:"Employee A",
+      dept:"Front Office",
+      level:"frontline",
+      outsourced:false,
+      yearsAway:3,
+      travelHours:10,
+      care:"elder",
+      perfRating:4,
+      absences:1,
+      backfill:"medium"
+    },
+    {
+      name:"Employee B",
+      dept:"Housekeeping",
+      level:"supervisor",
+      outsourced:false,
+      yearsAway:5,
+      travelHours:14,
+      care:"both",
+      perfRating:3,
+      absences:2,
+      backfill:"hard"
+    },
+    {
+      name:"Employee C",
+      dept:"F&B",
+      level:"manager",
+      outsourced:true,
+      yearsAway:2,
+      travelHours:6,
+      care:"child",
+      perfRating:5,
+      absences:0,
+      backfill:"medium"
+    }
+  ];
+  renderAll();
+});
+document.getElementById("btnExport").addEventListener("click", exportCSV);
+
+// Initial render
+renderAll();
+</script>
+</body>
+</html>
